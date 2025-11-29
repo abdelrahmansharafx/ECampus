@@ -35,9 +35,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SIZES.md,
     paddingVertical: SIZES.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
   },
   leftSection: {
     flex: 1,
@@ -46,19 +43,27 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: SIZES.md,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButtonText: {
     fontSize: 24,
-    color: COLORS.primary,
+    color: COLORS.white, // White matching gradient theme
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.dark,
+    color: COLORS.white,
   },
   subtitle: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     marginTop: SIZES.xs,
   },
   rightSection: {

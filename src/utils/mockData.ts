@@ -21,8 +21,8 @@ export const mockDriverProfile: DriverProfile = {
   cancelledRides: 2,
   earnings: 8450,
   currentLocation: {
-    latitude: 40.7128,
-    longitude: -74.006,
+    latitude: 30.05,
+    longitude: 31.01,
   },
 };
 
@@ -33,8 +33,8 @@ export const mockStudents: Student[] = [
     name: 'Alice Johnson',
     grade: '5th',
     pickupLocation: {
-      latitude: 40.7289,
-      longitude: -73.9965,
+      latitude: 30.052,
+      longitude: 31.012,
     },
     parentId: 'parent-1',
   },
@@ -43,8 +43,8 @@ export const mockStudents: Student[] = [
     name: 'Bob Smith',
     grade: '4th',
     pickupLocation: {
-      latitude: 40.7505,
-      longitude: -73.9972,
+      latitude: 30.048,
+      longitude: 31.008,
     },
     parentId: 'parent-2',
   },
@@ -53,8 +53,8 @@ export const mockStudents: Student[] = [
     name: 'Charlie Brown',
     grade: '3rd',
     pickupLocation: {
-      latitude: 40.7614,
-      longitude: -73.9776,
+      latitude: 30.055,
+      longitude: 31.015,
     },
     parentId: 'parent-3',
   },
@@ -71,17 +71,17 @@ export const mockUpcomingRides: Ride[] = [
     status: 'scheduled',
     pickupPoints: [
       {
-        latitude: 40.7289,
-        longitude: -73.9965,
+        latitude: 30.052,
+        longitude: 31.012,
       },
       {
-        latitude: 40.7505,
-        longitude: -73.9972,
+        latitude: 30.048,
+        longitude: 31.008,
       },
     ],
     destinationLocation: {
-      latitude: 40.6943,
-      longitude: -73.9249,
+      latitude: 29.965,
+      longitude: 31.265,
     },
     totalDistance: 12.5,
     totalDuration: 30,
@@ -96,13 +96,13 @@ export const mockUpcomingRides: Ride[] = [
     status: 'scheduled',
     pickupPoints: [
       {
-        latitude: 40.7614,
-        longitude: -73.9776,
+        latitude: 30.055,
+        longitude: 31.015,
       },
     ],
     destinationLocation: {
-      latitude: 40.6943,
-      longitude: -73.9249,
+      latitude: 29.965,
+      longitude: 31.265,
     },
     totalDistance: 8.3,
     totalDuration: 25,
@@ -122,21 +122,21 @@ export const mockCompletedRides: Ride[] = [
     status: 'completed',
     pickupPoints: [
       {
-        latitude: 40.7289,
-        longitude: -73.9965,
+        latitude: 30.052,
+        longitude: 31.012,
       },
       {
-        latitude: 40.7505,
-        longitude: -73.9972,
+        latitude: 30.048,
+        longitude: 31.008,
       },
       {
-        latitude: 40.7614,
-        longitude: -73.9776,
+        latitude: 30.055,
+        longitude: 31.015,
       },
     ],
     destinationLocation: {
-      latitude: 40.6943,
-      longitude: -73.9249,
+      latitude: 29.965,
+      longitude: 31.265,
     },
     totalDistance: 18.2,
     totalDuration: 35,
@@ -151,13 +151,13 @@ export const mockCompletedRides: Ride[] = [
     status: 'completed',
     pickupPoints: [
       {
-        latitude: 40.7289,
-        longitude: -73.9965,
+        latitude: 30.052,
+        longitude: 31.012,
       },
     ],
     destinationLocation: {
-      latitude: 40.6943,
-      longitude: -73.9249,
+      latitude: 29.965,
+      longitude: 31.265,
     },
     totalDistance: 9.8,
     totalDuration: 28,

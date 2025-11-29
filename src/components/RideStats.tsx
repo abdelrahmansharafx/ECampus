@@ -70,16 +70,18 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Transparent white matching gradient
     borderRadius: SIZES.md,
     padding: SIZES.md,
     marginBottom: SIZES.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     elevation: 3,
   },
   statValue: {
@@ -94,9 +96,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   detailedStats: {
-    backgroundColor: COLORS.gray[50],
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Transparent white
     borderRadius: SIZES.md,
     padding: SIZES.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   detailRow: {
     flexDirection: 'row',
@@ -104,16 +108,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SIZES.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
   detailLabel: {
     fontSize: 14,
-    color: COLORS.gray[600],
+    color: COLORS.white,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
   },
 });
 

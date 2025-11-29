@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ride } from '../types';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, SIZES } from '../constants';
-import { formatTime, formatDistance, formatDuration } from '../utils/helpers';
+import { Ride } from '../types';
+import { formatDistance, formatDuration, formatTime, getStatusColor } from '../utils/helpers';
 
 interface RideCardProps {
   ride: Ride;
@@ -11,16 +11,11 @@ interface RideCardProps {
 }
 
 const RideCard: React.FC<RideCardProps> = ({ ride, onPress, showStatus = true }) => {
-  const statusColor =
-    ride.status === 'completed'
-      ? COLORS.success
-      : ride.status === 'in-progress'
-        ? COLORS.primary
-        : ride.status === 'cancelled'
-          ? COLORS.danger
-          : COLORS.secondary;
-
-  const statusText = ride.status.charAt(0).toUpperCase() + ride.status.slice(1);
+  const statusColor = useMemo(() => getStatusColor(ride.status), [ride.status]);
+  const statusText = useMemo(
+    () => ride.status.charAt(0).toUpperCase() + ride.status.slice(1),
+    [ride.status]
+  );
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -57,16 +52,16 @@ const RideCard: React.FC<RideCardProps> = ({ ride, onPress, showStatus = true })
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Transparent white
     borderRadius: SIZES.md,
     padding: SIZES.md,
     marginBottom: SIZES.md,
     borderWidth: 1,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.3)', // Semi-transparent white border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     elevation: 3,
   },
   header: {
@@ -78,11 +73,11 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
   },
   studentCount: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     marginTop: SIZES.xs,
   },
   statusBadge: {
@@ -104,17 +99,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     marginBottom: SIZES.xs / 2,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
   },
   notes: {
     fontSize: 12,
-    color: COLORS.gray[600],
+    color: COLORS.white,
     marginTop: SIZES.md,
     fontStyle: 'italic',
   },

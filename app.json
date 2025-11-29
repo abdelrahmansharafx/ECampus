@@ -8,6 +8,7 @@
     "scheme": "schoolbusdriver",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "main": "index.js",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.schoolbusapp.driver"

@@ -93,7 +93,6 @@ export type DriverStackParamList = {
   RideDetail: { rideId: string };
   Settings: undefined;
 };
-
 export type ParentStackParamList = {
   Dashboard: undefined;
   Children: undefined;
@@ -101,3 +100,4 @@ export type ParentStackParamList = {
   Profile: undefined;
   Settings: undefined;
 };
+

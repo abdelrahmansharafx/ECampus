@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useDriver } from '../hooks/useDriver';
 import { COLORS, SIZES } from '../constants';
 import Button from '../components/Button';
 import RideCard from '../components/RideCard';
 import RideStats from '../components/RideStats';
+import MapView from '../components/MapView';
+import ScreenWrapper from '../components/ScreenWrapper';
+import Section from '../components/Section';
+import EmptyState from '../components/EmptyState';
 import { mockDriverProfile, mockUpcomingRides, mockCompletedRides } from '../utils/mockData';
 import { Ride, RideStats as RideStatsType } from '../types';
 
@@ -15,7 +20,7 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user } = useAuth();
-  const { profile, setProfile, activeRide, setActiveRide, setUpcomingRides, setCompletedRides } =
+  const { profile, setProfile, activeRide, setActiveRide, setUpcomingRides, setCompletedRides, currentLocation } =
     useDriver();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -23,35 +28,34 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [upcomingRides, setLocalUpcomingRides] = useState<Ride[]>([]);
 
   useEffect(() => {
-    const initLoad = async () => {
-      try {
-        // TODO: Load real data from API
-        setProfile(mockDriverProfile);
-        setUpcomingRides(mockUpcomingRides);
-        setCompletedRides(mockCompletedRides);
-        setLocalUpcomingRides(mockUpcomingRides);
+    // TODO: Integrate with backend API
+    // Example: const response = await fetch('YOUR_API_ENDPOINT/driver/dashboard');
+    // const data = await response.json();
+    // setProfile(data.profile);
+    // setUpcomingRides(data.upcomingRides);
+    // setCompletedRides(data.completedRides);
 
-        // Calculate stats
-        const totalRides = mockUpcomingRides.length + mockCompletedRides.length;
-        const completedRides = mockCompletedRides.length;
-        const cancelledRides = 2; // Mock value
-        const totalDistance = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDistance, 0);
-        const totalDuration = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDuration, 0);
+    // Currently using mock data for development
+    setProfile(mockDriverProfile);
+    setUpcomingRides(mockUpcomingRides);
+    setCompletedRides(mockCompletedRides);
+    setLocalUpcomingRides(mockUpcomingRides);
 
-        setStats({
-          totalRides,
-          completedRides,
-          cancelledRides,
-          averageRating: mockDriverProfile.rating,
-          totalKmDriven: totalDistance,
-          totalHoursDriven: totalDuration / 60,
-        });
-      } catch (error) {
-        console.error('Failed to load data:', error);
-      }
-    };
+    // Calculate stats
+    const totalRides = mockUpcomingRides.length + mockCompletedRides.length;
+    const completedRides = mockCompletedRides.length;
+    const cancelledRides = 2;
+    const totalDistance = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDistance, 0);
+    const totalDuration = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDuration, 0);
 
-    initLoad();
+    setStats({
+      totalRides,
+      completedRides,
+      cancelledRides,
+      averageRating: mockDriverProfile.rating,
+      totalKmDriven: totalDistance,
+      totalHoursDriven: totalDuration / 60,
+    });
   }, [setProfile, setUpcomingRides, setCompletedRides]);
 
   const onRefresh = async () => {
@@ -79,13 +83,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    <ScreenWrapper
+      showSettingsButton
+      onSettingsPress={() => navigation.navigate('Settings')}
     >
+      <ScrollView
+        style={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
       {/* Welcome Section */}
       <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeText}>Welcome, {user?.name || 'Driver'}!</Text>
+        <View style={styles.welcomeHeader}>
+          <Text style={styles.welcomeText}>Welcome, {user?.name || 'Driver'}!</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileIconButton}>
+            <Ionicons name="person-circle-outline" size={28} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.dateText}>
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
@@ -99,12 +112,29 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       {activeRide ? (
         <View style={styles.activeRideCard}>
           <Text style={styles.activeRideTitle}>Active Ride</Text>
-          <RideCard ride={activeRide} onPress={() => navigation.navigate('RideDetail', {})} />
+          {currentLocation || profile?.currentLocation ? (
+            <View style={styles.mapContainer}>
+              <MapView
+                driverLocation={currentLocation || profile?.currentLocation!}
+                pickupLocations={activeRide.pickupPoints}
+                dropoffLocation={activeRide.destinationLocation}
+              />
+            </View>
+          ) : (
+            <View style={styles.mapContainer}>
+              <Text style={styles.locationErrorText}>
+                Waiting for GPS location... Please ensure location permission is granted.
+              </Text>
+            </View>
+          )}
+          <RideCard ride={activeRide} onPress={() => navigation.navigate('RideDetail', { rideId: activeRide.id })} />
         </View>
       ) : (
         <View style={styles.noActiveRide}>
           <Text style={styles.noActiveRideText}>No active rides</Text>
-          <Button title="Check Available Rides" onPress={() => navigation.navigate('Rides')} />
+          <View style={styles.buttonWrapper}>
+            <Button title="Check Available Rides" onPress={() => navigation.navigate('Rides')} />
+          </View>
         </View>
       )}
 
@@ -112,14 +142,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       {stats && <RideStats stats={stats} />}
 
       {/* Upcoming Rides Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Upcoming Rides</Text>
+      <Section
+        title="Upcoming Rides"
+        headerRight={
           <Text style={styles.viewAll} onPress={() => navigation.navigate('Rides')}>
             View All
           </Text>
-        </View>
-
+        }
+      >
         {upcomingRides.length > 0 ? (
           upcomingRides.slice(0, 2).map((ride) => (
             <RideCard
@@ -129,74 +159,43 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             />
           ))
         ) : (
-          <Text style={styles.emptyText}>No upcoming rides scheduled</Text>
+          <EmptyState message="No upcoming rides scheduled" />
         )}
-      </View>
-
-      {/* Profile Card */}
-      <View style={styles.section}>
-        <View style={styles.profileCard}>
-          <View>
-            <Text style={styles.profileName}>{profile?.name || 'Driver Name'}</Text>
-            <Text style={styles.profileRating}>
-              Rating: {profile?.rating || 0} ⭐
-            </Text>
-            <Text style={styles.profileVehicle}>
-              {profile?.vehicleInfo.model} - {profile?.vehicleInfo.plate}
-            </Text>
-          </View>
-          <Button
-            title="Profile"
-            size="small"
-            onPress={handleViewProfile}
-          />
-        </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.buttonGroup}>
-          <Button
-            title="Start Ride"
-            onPress={() => navigation.navigate('Rides')}
-            variant="primary"
-          />
-          <Button
-            title="Settings"
-            onPress={() => navigation.navigate('Settings')}
-            variant="secondary"
-          />
-        </View>
-      </View>
+      </Section>
 
       {/* Bottom Spacing */}
       <View style={{ height: SIZES.xl }} />
     </ScrollView>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
   },
   welcomeSection: {
     paddingHorizontal: SIZES.md,
     paddingTop: SIZES.lg,
     paddingBottom: SIZES.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+  },
+  welcomeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.dark,
+    color: COLORS.white,
+    flex: 1,
+  },
+  profileIconButton: {
+    padding: SIZES.xs,
   },
   dateText: {
     fontSize: 14,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     marginTop: SIZES.xs,
   },
   activeRideCard: {
@@ -206,79 +205,45 @@ const styles = StyleSheet.create({
   activeRideTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
     marginBottom: SIZES.sm,
+  },
+  mapContainer: {
+    height: 300,
+    marginBottom: SIZES.md,
+    borderRadius: SIZES.md,
+    overflow: 'hidden',
   },
   noActiveRide: {
     marginHorizontal: SIZES.md,
     marginVertical: SIZES.md,
     paddingHorizontal: SIZES.md,
     paddingVertical: SIZES.lg,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: SIZES.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   noActiveRideText: {
     fontSize: 16,
-    color: COLORS.gray[600],
+    color: COLORS.white,
     marginBottom: SIZES.md,
   },
-  section: {
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SIZES.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.dark,
+  buttonWrapper: {
+    width: '80%',
+    alignSelf: 'center',
   },
   viewAll: {
     fontSize: 14,
-    color: COLORS.primary,
+    color: COLORS.white,
     fontWeight: '600',
   },
-  emptyText: {
+  locationErrorText: {
     fontSize: 14,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     textAlign: 'center',
-    paddingVertical: SIZES.lg,
-  },
-  profileCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.md,
     padding: SIZES.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-  },
-  profileName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.dark,
-  },
-  profileRating: {
-    fontSize: 12,
-    color: COLORS.gray[600],
-    marginTop: SIZES.xs,
-  },
-  profileVehicle: {
-    fontSize: 12,
-    color: COLORS.gray[500],
-    marginTop: SIZES.xs,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: SIZES.sm,
   },
 });
 

@@ -1,41 +1,3 @@
-import { Location } from '../types';
-
-// Calculate distance between two coordinates in kilometers
-export const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-// Calculate total distance from a series of points
-export const calculateTotalDistance = (points: Location[]): number => {
-  if (points.length < 2) return 0;
-
-  let totalDistance = 0;
-  for (let i = 0; i < points.length - 1; i++) {
-    totalDistance += calculateDistance(
-      points[i].latitude,
-      points[i].longitude,
-      points[i + 1].latitude,
-      points[i + 1].longitude
-    );
-  }
-  return totalDistance;
-};
-
 // Format distance to readable string
 export const formatDistance = (km: number): string => {
   if (km < 1) {
@@ -52,11 +14,6 @@ export const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return `${hours}h ${remainingMinutes}min`;
-};
-
-// Calculate ETA in minutes
-export const calculateETA = (distanceKm: number, speedKmh: number = 40): number => {
-  return (distanceKm / speedKmh) * 60;
 };
 
 // Format date to readable string
@@ -84,44 +41,31 @@ export const formatDateTime = (date: Date | string): string => {
   return `${formatDate(date)} ${formatTime(date)}`;
 };
 
-// Validate email
-export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-// Validate phone number (basic validation)
-export const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^\d{10,}$/;
-  return phoneRegex.test(phone.replace(/\D/g, ''));
-};
-
-// Get initials from name
-export const getInitials = (name: string): string => {
-  return name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 // Round to decimal places
 export const roundTo = (num: number, decimals: number = 2): number => {
   return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 };
 
+// Get status color based on ride status
+export const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'completed':
+      return '#16A34A'; // COLORS.success
+    case 'in-progress':
+      return '#3A3A3A'; // COLORS.primary
+    case 'cancelled':
+      return '#DC2626'; // COLORS.danger
+    default:
+      return '#64748B'; // COLORS.secondary
+  }
+};
+
 export default {
-  calculateDistance,
-  calculateTotalDistance,
   formatDistance,
   formatDuration,
-  calculateETA,
   formatDate,
   formatTime,
   formatDateTime,
-  isValidEmail,
-  isValidPhone,
-  getInitials,
   roundTo,
+  getStatusColor,
 };

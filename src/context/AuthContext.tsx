@@ -41,17 +41,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const bootstrapAsync = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.authToken);
-      const storedRole = await AsyncStorage.getItem(STORAGE_KEYS.userRole);
-      const storedProfile = await AsyncStorage.getItem(STORAGE_KEYS.userProfile);
-
-      if (storedToken && storedProfile && storedRole) {
-        const profile = JSON.parse(storedProfile);
-        setUser(profile);
-        setUserRole(storedRole as UserRole);
-      }
+      // Don't auto-login - always start on login screen
+      // User must manually log in each time
+      // Clear any stored auth data to ensure fresh start
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.authToken,
+        STORAGE_KEYS.userRole,
+        STORAGE_KEYS.userProfile,
+      ]);
     } catch (error) {
-      console.warn('Failed to restore session:', error);
+      // Silently handle errors
     } finally {
       setIsLoading(false);
     }
@@ -60,31 +59,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(async (email: string, password: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch('https://api.schoolbusapp.com/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, role }),
-      });
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch('YOUR_API_ENDPOINT/auth/login', { ... });
+      // const { token, user: userData } = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+      // Mock user data for development
+      const mockUser: AuthUser = {
+        id: '1',
+        name: role === 'driver' ? 'John Doe' : 'Parent User',
+        email,
+        phone: '+1234567890',
+        role,
+      };
 
-      const { token, user: userData } = await response.json();
+      const mockToken = 'mock_token_' + Date.now();
 
       await AsyncStorage.multiSet([
-        [STORAGE_KEYS.authToken, token],
+        [STORAGE_KEYS.authToken, mockToken],
         [STORAGE_KEYS.userRole, role],
-        [STORAGE_KEYS.userProfile, JSON.stringify(userData)],
+        [STORAGE_KEYS.userProfile, JSON.stringify(mockUser)],
       ]);
 
-      setUser(userData);
+      setUser(mockUser);
       setUserRole(role);
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -94,7 +92,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TODO: Call your API endpoint to invalidate token
+      // TODO: Integrate with backend API to invalidate token
+      // Example: await fetch('YOUR_API_ENDPOINT/auth/logout', { method: 'POST' });
+
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.authToken,
         STORAGE_KEYS.userRole,
@@ -104,7 +104,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setUserRole(null);
     } catch (error) {
-      console.error('Logout error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -114,31 +113,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = useCallback(async (userData: Partial<AuthUser>, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch('https://api.schoolbusapp.com/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...userData, password }),
-      });
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch('YOUR_API_ENDPOINT/auth/register', { ... });
+      // const { token, user: newUser } = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Signup failed');
-      }
+      // Mock user data for development
+      const mockUser: AuthUser = {
+        id: Date.now().toString(),
+        name: userData.name || 'New User',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        role: (userData.role as UserRole) || 'driver',
+      };
 
-      const { token, user: newUser } = await response.json();
+      const mockToken = 'mock_token_' + Date.now();
 
       await AsyncStorage.multiSet([
-        [STORAGE_KEYS.authToken, token],
-        [STORAGE_KEYS.userRole, userData.role || 'driver'],
-        [STORAGE_KEYS.userProfile, JSON.stringify(newUser)],
+        [STORAGE_KEYS.authToken, mockToken],
+        [STORAGE_KEYS.userRole, mockUser.role],
+        [STORAGE_KEYS.userProfile, JSON.stringify(mockUser)],
       ]);
 
-      setUser(newUser);
-      setUserRole((userData.role as UserRole) || 'driver');
+      setUser(mockUser);
+      setUserRole(mockUser.role);
     } catch (error) {
-      console.error('Signup error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -151,25 +149,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('No user logged in');
       }
 
-      // TODO: Call your API endpoint
-      const response = await fetch(`https://api.schoolbusapp.com/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch(`YOUR_API_ENDPOINT/users/${user.id}`, { ... });
+      // const updatedUser = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Update failed');
-      }
-
-      const updatedUser = await response.json();
-
+      // Update locally for development
+      const updatedUser = { ...user, ...userData };
       await AsyncStorage.setItem(STORAGE_KEYS.userProfile, JSON.stringify(updatedUser));
       setUser(updatedUser);
     } catch (error) {
-      console.error('Update profile error:', error);
       throw error;
     }
   }, [user]);

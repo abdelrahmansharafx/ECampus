@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   RefreshControl,
   FlatList,
 } from 'react-native';
 import { useDriver } from '../hooks/useDriver';
-import { COLORS, SIZES } from '../constants';
+import { SIZES } from '../constants';
 import Header from '../components/Header';
 import RideCard from '../components/RideCard';
-import Button from '../components/Button';
+import ScreenWrapper from '../components/ScreenWrapper';
+import TabSwitcher from '../components/TabSwitcher';
+import EmptyState from '../components/EmptyState';
 import { mockUpcomingRides, mockCompletedRides } from '../utils/mockData';
 
 interface RidesScreenProps {
@@ -27,40 +28,31 @@ const RidesScreen: React.FC<RidesScreenProps> = ({ navigation }) => {
   const [localCompletedRides, setLocalCompletedRides] = useState(mockCompletedRides);
 
   useEffect(() => {
-    const initLoad = async () => {
-      try {
-        // TODO: Load real data from API
-        setUpcomingRides(mockUpcomingRides);
-        setCompletedRides(mockCompletedRides);
-        setLocalUpcomingRides(mockUpcomingRides);
-        setLocalCompletedRides(mockCompletedRides);
-      } catch (error) {
-        console.error('Failed to load rides:', error);
-      }
-    };
+    // TODO: Integrate with backend API
+    // Example: const response = await fetch('YOUR_API_ENDPOINT/rides');
+    // const data = await response.json();
+    // setUpcomingRides(data.upcoming);
+    // setCompletedRides(data.completed);
 
-    initLoad();
+    // Currently using mock data for development
+    setUpcomingRides(mockUpcomingRides);
+    setCompletedRides(mockCompletedRides);
+    setLocalUpcomingRides(mockUpcomingRides);
+    setLocalCompletedRides(mockCompletedRides);
   }, [setUpcomingRides, setCompletedRides]);
 
-  const loadRides = async () => {
-    try {
-      // TODO: Load real data from API
-      setUpcomingRides(mockUpcomingRides);
-      setCompletedRides(mockCompletedRides);
-      setLocalUpcomingRides(mockUpcomingRides);
-      setLocalCompletedRides(mockCompletedRides);
-    } catch (error) {
-      console.error('Failed to load rides:', error);
-    }
+  const loadRides = () => {
+    // TODO: Integrate with backend API
+    setUpcomingRides(mockUpcomingRides);
+    setCompletedRides(mockCompletedRides);
+    setLocalUpcomingRides(mockUpcomingRides);
+    setLocalCompletedRides(mockCompletedRides);
   };
 
-  const onRefresh = async () => {
+  const onRefresh = () => {
     setRefreshing(true);
-    try {
-      await loadRides();
-    } finally {
-      setRefreshing(false);
-    }
+    loadRides();
+    setRefreshing(false);
   };
 
   const handleStartRide = async (rideId: string) => {
@@ -69,129 +61,63 @@ const RidesScreen: React.FC<RidesScreenProps> = ({ navigation }) => {
       setLocalUpcomingRides((prev) => prev.filter((r) => r.id !== rideId));
       navigation.navigate('RideDetail', { rideId });
     } catch (error) {
-      console.error('Failed to start ride:', error);
+      // Silently handle errors
     }
   };
 
   const displayRides = activeTab === 'upcoming' ? localUpcomingRides : localCompletedRides;
 
   return (
-    <View style={styles.container}>
-      <Header
-        title="Rides"
-        onBackPress={() => navigation.goBack()}
-      />
+    <ScreenWrapper
+      showSettingsButton
+      onSettingsPress={() => navigation.navigate('Settings')}
+    >
+      <View style={styles.container}>
+        <Header
+          title="Rides"
+          onBackPress={() => navigation.goBack()}
+        />
 
-      {/* Tab Switcher */}
-      <View style={styles.tabContainer}>
-        <View style={styles.tabs}>
-          <View
-            style={[
-              styles.tab,
-              activeTab === 'upcoming' && styles.activeTab,
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'upcoming' && styles.activeTabText,
-              ]}
-              onPress={() => setActiveTab('upcoming')}
-            >
-              Upcoming ({localUpcomingRides.length})
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.tab,
-              activeTab === 'completed' && styles.activeTab,
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'completed' && styles.activeTabText,
-              ]}
-              onPress={() => setActiveTab('completed')}
-            >
-              Completed ({localCompletedRides.length})
-            </Text>
-          </View>
-        </View>
+        {/* Tab Switcher */}
+        <TabSwitcher
+          tabs={[
+            { id: 'upcoming', label: 'Upcoming', count: localUpcomingRides.length },
+            { id: 'completed', label: 'Completed', count: localCompletedRides.length },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(tabId) => setActiveTab(tabId as RideTab)}
+        />
+
+        {/* Rides List */}
+        <FlatList
+          data={displayRides}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={
+            <EmptyState message={`No ${activeTab} rides`} />
+          }
+          renderItem={({ item }) => (
+            <View style={styles.rideWrapper}>
+              <RideCard
+                ride={item}
+                onPress={() => {
+                  if (activeTab === 'upcoming') {
+                    navigation.navigate('RideDetail', { rideId: item.id });
+                  }
+                }}
+              />
+            </View>
+          )}
+          contentContainerStyle={styles.listContent}
+        />
       </View>
-
-      {/* Rides List */}
-      <FlatList
-        data={displayRides}
-        keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No {activeTab} rides
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.rideWrapper}>
-            <RideCard
-              ride={item}
-              onPress={() => {
-                if (activeTab === 'upcoming') {
-                  navigation.navigate('RideDetail', { rideId: item.id });
-                }
-              }}
-            />
-            {activeTab === 'upcoming' && (
-              <View style={styles.actionButtons}>
-                <Button
-                  title="Start Ride"
-                  onPress={() => handleStartRide(item.id)}
-                  variant="primary"
-                />
-              </View>
-            )}
-          </View>
-        )}
-        contentContainerStyle={styles.listContent}
-      />
-    </View>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
-  },
-  tabContainer: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
-  },
-  tabs: {
-    flexDirection: 'row',
-    gap: SIZES.md,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: SIZES.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: COLORS.primary,
-  },
-  tabText: {
-    fontSize: 14,
-    color: COLORS.gray[600],
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  activeTabText: {
-    color: COLORS.primary,
   },
   listContent: {
     paddingHorizontal: SIZES.md,
@@ -199,19 +125,6 @@ const styles = StyleSheet.create({
   },
   rideWrapper: {
     marginBottom: SIZES.md,
-  },
-  actionButtons: {
-    marginTop: SIZES.sm,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SIZES.xxl,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.gray[500],
   },
 });
 

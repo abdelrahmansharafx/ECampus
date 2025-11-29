@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useDriver } from '../hooks/useDriver';
 import { COLORS, SIZES } from '../constants';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import RideStats from '../components/RideStats';
+import ScreenWrapper from '../components/ScreenWrapper';
+import Section from '../components/Section';
+import InfoCard from '../components/InfoCard';
 import { mockDriverProfile, mockCompletedRides } from '../utils/mockData';
 import { RideStats as RideStatsType } from '../types';
 
@@ -19,41 +23,44 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [stats, setStats] = useState<RideStatsType | null>(null);
 
   useEffect(() => {
-    const initLoad = () => {
-      // TODO: Load real data from API
-      setProfile(mockDriverProfile);
+    // TODO: Integrate with backend API
+    // Example: const response = await fetch('YOUR_API_ENDPOINT/driver/profile');
+    // const profileData = await response.json();
+    // setProfile(profileData);
 
-      const totalDistance = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDistance, 0);
-      const totalDuration = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDuration, 0);
+    // Currently using mock data for development
+    setProfile(mockDriverProfile);
 
-      setStats({
-        totalRides: mockCompletedRides.length,
-        completedRides: mockCompletedRides.length,
-        cancelledRides: 0,
-        averageRating: mockDriverProfile.rating,
-        totalKmDriven: totalDistance,
-        totalHoursDriven: totalDuration / 60,
-      });
-    };
+    const totalDistance = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDistance, 0);
+    const totalDuration = mockCompletedRides.reduce((sum, ride) => sum + ride.totalDuration, 0);
 
-    initLoad();
+    setStats({
+      totalRides: mockCompletedRides.length,
+      completedRides: mockCompletedRides.length,
+      cancelledRides: 0,
+      averageRating: mockDriverProfile.rating,
+      totalKmDriven: totalDistance,
+      totalHoursDriven: totalDuration / 60,
+    });
   }, [setProfile]);
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Auth' }],
-      });
+      // Navigation will automatically switch to Auth screen via RootNavigator
+      // based on isSignedIn state change
     } catch (error) {
-      console.error('Logout error:', error);
+      // Silently handle logout errors
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Header title="Profile" onBackPress={() => navigation.goBack()} />
+    <ScreenWrapper
+      showSettingsButton
+      onSettingsPress={() => navigation.navigate('Settings')}
+    >
+      <ScrollView style={styles.container}>
+        <Header title="Profile" onBackPress={() => navigation.goBack()} />
 
       {/* Profile Header */}
       <View style={styles.profileHeader}>
@@ -68,88 +75,65 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         </View>
         <Text style={styles.name}>{profile?.name || user?.name}</Text>
         <View style={styles.ratingContainer}>
-          <Text style={styles.rating}>{profile?.rating || 0}⭐</Text>
+          <View style={styles.ratingRow}>
+            <Ionicons name="star" size={18} color={COLORS.warning} />
+            <Text style={styles.rating}>{profile?.rating || 0}</Text>
+          </View>
           <Text style={styles.ratingText}>({mockCompletedRides.length} rides)</Text>
         </View>
       </View>
 
       {/* Contact Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Contact Information</Text>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue}>{profile?.email || user?.email}</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Phone</Text>
-          <Text style={styles.infoValue}>{profile?.phone || user?.phone}</Text>
-        </View>
-      </View>
+      <Section title="Contact Information">
+        <InfoCard label="Email" value={profile?.email || user?.email || ''} />
+        <InfoCard label="Phone" value={profile?.phone || user?.phone || ''} />
+      </Section>
 
       {/* Vehicle Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Vehicle Information</Text>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Model</Text>
-          <Text style={styles.infoValue}>{profile?.vehicleInfo.model}</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>License Plate</Text>
-          <Text style={styles.infoValue}>{profile?.vehicleInfo.plate}</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Color</Text>
-          <Text style={styles.infoValue}>{profile?.vehicleInfo.color}</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Capacity</Text>
-          <Text style={styles.infoValue}>{profile?.vehicleInfo.capacity} passengers</Text>
-        </View>
-      </View>
+      <Section title="Vehicle Information">
+        <InfoCard label="Model" value={profile?.vehicleInfo?.model || ''} />
+        <InfoCard label="License Plate" value={profile?.vehicleInfo?.plate || ''} />
+        <InfoCard label="Color" value={profile?.vehicleInfo?.color || ''} />
+        <InfoCard label="Capacity" value={`${profile?.vehicleInfo?.capacity || 0} passengers`} />
+      </Section>
 
       {/* Driver Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Driver Information</Text>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>License Number</Text>
-          <Text style={styles.infoValue}>{profile?.licenseNumber}</Text>
-        </View>
-      </View>
+      <Section title="Driver Information">
+        <InfoCard label="License Number" value={profile?.licenseNumber || ''} />
+      </Section>
 
       {/* Stats */}
       {stats && <RideStats stats={stats} />}
 
       {/* Action Buttons */}
-      <View style={styles.section}>
+      <Section>
         <Button
           title="Edit Profile"
           onPress={() => navigation.navigate('Settings')}
           variant="primary"
         />
+        <View style={{ height: SIZES.md }} />
         <Button
           title="Logout"
           onPress={handleLogout}
           variant="danger"
         />
-      </View>
+      </Section>
 
       {/* Bottom Spacing */}
       <View style={{ height: SIZES.xl }} />
     </ScrollView>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
   },
   profileHeader: {
     alignItems: 'center',
     paddingVertical: SIZES.xl,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
   },
   avatarContainer: {
     marginBottom: SIZES.md,
@@ -163,9 +147,11 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)', // Transparent white matching gradient
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   avatarText: {
     fontSize: 40,
@@ -175,13 +161,18 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.dark,
+    color: COLORS.white,
     marginBottom: SIZES.sm,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SIZES.sm,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SIZES.xs,
   },
   rating: {
     fontSize: 18,
@@ -190,35 +181,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    color: COLORS.gray[500],
-  },
-  section: {
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.dark,
-    marginBottom: SIZES.md,
-  },
-  infoCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.md,
-    padding: SIZES.md,
-    marginBottom: SIZES.sm,
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: COLORS.gray[500],
-    marginBottom: SIZES.xs,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
   },
 });
 

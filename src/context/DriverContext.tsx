@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useState } from 'react';
-import { Location, Ride, RideStatus, DriverProfile } from '../types';
+import React, { createContext, useCallback, useEffect, useState } from 'react';
+import { useLocation } from '../hooks/useLocation';
+import { DriverProfile, Location, Ride, RideStatus } from '../types';
 
 interface DriverContextType {
   profile: DriverProfile | null;
@@ -41,121 +42,128 @@ interface DriverProviderProps {
 
 export const DriverProvider: React.FC<DriverProviderProps> = ({ children }) => {
   const [profile, setProfile] = useState<DriverProfile | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [upcomingRides, setUpcomingRides] = useState<Ride[]>([]);
   const [completedRides, setCompletedRides] = useState<Ride[]>([]);
+  
+  // Get real-time GPS location
+  const { location: gpsLocation, error: locationError, isLoading: locationLoading } = useLocation({
+    accuracy: 6,
+    timeInterval: 10000,
+    distanceInterval: 50,
+    enabled: true,
+  });
+
+  // Update currentLocation when GPS location changes
+  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  
+  useEffect(() => {
+    if (gpsLocation) {
+      // Only update if we have valid GPS coordinates
+      if (gpsLocation.latitude && gpsLocation.longitude) {
+        setCurrentLocation(gpsLocation);
+        // Also update profile's currentLocation if profile exists
+        setProfile((prevProfile) => {
+          if (prevProfile) {
+            const locationChanged = 
+              !prevProfile.currentLocation ||
+              prevProfile.currentLocation.latitude !== gpsLocation.latitude ||
+              prevProfile.currentLocation.longitude !== gpsLocation.longitude;
+            
+            if (locationChanged) {
+              return {
+                ...prevProfile,
+                currentLocation: gpsLocation,
+              };
+            }
+          }
+          return prevProfile;
+        });
+      }
+    } else if (locationError) {
+      // Log error but don't set default location
+      console.log('Location error in DriverContext:', locationError);
+    }
+  }, [gpsLocation, locationError]);
 
   const updateRideStatus = useCallback(async (rideId: string, status: RideStatus) => {
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch(`https://api.schoolbusapp.com/rides/${rideId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch(`YOUR_API_ENDPOINT/rides/${rideId}`, { ... });
+      // const updatedRide = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Failed to update ride status');
+      // Update locally for development
+      const updatedRide = (activeRide?.id === rideId ? activeRide : 
+        upcomingRides.find(r => r.id === rideId)) as Ride;
+      
+      if (updatedRide) {
+        const rideWithNewStatus = { ...updatedRide, status };
+        
+        if (activeRide?.id === rideId) {
+          setActiveRide(rideWithNewStatus);
+        }
+
+        setUpcomingRides((prevRides) =>
+          prevRides.map((ride) => (ride.id === rideId ? rideWithNewStatus : ride))
+        );
       }
-
-      const updatedRide = await response.json();
-
-      if (activeRide?.id === rideId) {
-        setActiveRide(updatedRide);
-      }
-
-      setUpcomingRides((prevRides) =>
-        prevRides.map((ride) => (ride.id === rideId ? updatedRide : ride))
-      );
     } catch (error) {
-      console.error('Update ride status error:', error);
       throw error;
     }
-  }, [activeRide?.id]);
+  }, [activeRide, upcomingRides]);
 
   const startRide = useCallback(async (rideId: string) => {
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch(
-        `https://api.schoolbusapp.com/rides/${rideId}/start`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch(`YOUR_API_ENDPOINT/rides/${rideId}/start`, { ... });
+      // const updatedRide = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Failed to start ride');
+      // Update locally for development
+      const ride = upcomingRides.find((r) => r.id === rideId);
+      if (ride) {
+        const activeRideData = { ...ride, status: 'in-progress' as RideStatus };
+        setActiveRide(activeRideData);
+        setUpcomingRides((prevRides) => prevRides.filter((r) => r.id !== rideId));
       }
-
-      const updatedRide = await response.json();
-      setActiveRide(updatedRide);
-      setUpcomingRides((prevRides) => prevRides.filter((ride) => ride.id !== rideId));
     } catch (error) {
-      console.error('Start ride error:', error);
       throw error;
     }
-  }, []);
+  }, [upcomingRides]);
 
   const completeRide = useCallback(async (rideId: string) => {
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch(
-        `https://api.schoolbusapp.com/rides/${rideId}/complete`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch(`YOUR_API_ENDPOINT/rides/${rideId}/complete`, { ... });
+      // const completedRide = await response.json();
+
+      // Update locally for development
+      const ride = activeRide?.id === rideId ? activeRide : 
+        upcomingRides.find((r) => r.id === rideId);
+      
+      if (ride) {
+        const completedRide = { ...ride, status: 'completed' as RideStatus, actualEndTime: new Date() };
+        setActiveRide(null);
+        setCompletedRides((prevRides) => [completedRide, ...prevRides]);
+
+        if (profile) {
+          setProfile({
+            ...profile,
+            completedRides: profile.completedRides + 1,
+            totalRides: profile.totalRides + 1,
+          });
         }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to complete ride');
-      }
-
-      const completedRide = await response.json();
-      setActiveRide(null);
-      setCompletedRides((prevRides) => [completedRide, ...prevRides]);
-
-      if (profile) {
-        setProfile({
-          ...profile,
-          completedRides: profile.completedRides + 1,
-          totalRides: profile.totalRides + 1,
-        });
       }
     } catch (error) {
-      console.error('Complete ride error:', error);
       throw error;
     }
-  }, [profile]);
+  }, [activeRide, upcomingRides, profile]);
 
   const cancelRide = useCallback(async (rideId: string, reason: string) => {
     try {
-      // TODO: Call your API endpoint
-      const response = await fetch(
-        `https://api.schoolbusapp.com/rides/${rideId}/cancel`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ reason }),
-        }
-      );
+      // TODO: Integrate with backend API
+      // Example: const response = await fetch(`YOUR_API_ENDPOINT/rides/${rideId}/cancel`, { ... });
 
-      if (!response.ok) {
-        throw new Error('Failed to cancel ride');
-      }
-
-      await response.json();
-
+      // Update locally for development
       if (activeRide?.id === rideId) {
         setActiveRide(null);
       }
@@ -170,7 +178,6 @@ export const DriverProvider: React.FC<DriverProviderProps> = ({ children }) => {
         });
       }
     } catch (error) {
-      console.error('Cancel ride error:', error);
       throw error;
     }
   }, [activeRide?.id, profile]);

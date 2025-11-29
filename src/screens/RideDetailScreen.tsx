@@ -4,9 +4,14 @@ import { useDriver } from '../hooks/useDriver';
 import { COLORS, SIZES } from '../constants';
 import Header from '../components/Header';
 import Button from '../components/Button';
+import MapView from '../components/MapView';
+import ScreenWrapper from '../components/ScreenWrapper';
+import Section from '../components/Section';
+import InfoRow from '../components/InfoRow';
+import EmptyState from '../components/EmptyState';
 import { Ride } from '../types';
-import { mockUpcomingRides, mockCompletedRides } from '../utils/mockData';
-import { formatDistance, formatDuration, formatDateTime } from '../utils/helpers';
+import { mockUpcomingRides, mockCompletedRides, mockDriverProfile } from '../utils/mockData';
+import { formatDistance, formatDuration, formatDateTime, getStatusColor } from '../utils/helpers';
 
 interface RideDetailScreenProps {
   navigation: any;
@@ -15,7 +20,7 @@ interface RideDetailScreenProps {
 
 const RideDetailScreen: React.FC<RideDetailScreenProps> = ({ navigation, route }) => {
   const { rideId } = route.params || {};
-  const { activeRide, completeRide, cancelRide } = useDriver();
+  const { activeRide, completeRide, cancelRide, currentLocation, profile } = useDriver();
   const [ride, setRide] = useState<Ride | null>(activeRide || null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,7 +52,6 @@ const RideDetailScreen: React.FC<RideDetailScreenProps> = ({ navigation, route }
               },
             ]);
           } catch (err) {
-            console.error('Complete ride error:', err);
             Alert.alert('Error', 'Failed to complete ride');
           } finally {
             setIsLoading(false);
@@ -75,7 +79,6 @@ const RideDetailScreen: React.FC<RideDetailScreenProps> = ({ navigation, route }
               },
             ]);
           } catch (err) {
-            console.error('Cancel ride error:', err);
             Alert.alert('Error', 'Failed to cancel ride');
           } finally {
             setIsLoading(false);
@@ -87,18 +90,25 @@ const RideDetailScreen: React.FC<RideDetailScreenProps> = ({ navigation, route }
 
   if (!ride) {
     return (
-      <View style={styles.container}>
-        <Header title="Ride Details" onBackPress={() => navigation.goBack()} />
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Ride not found</Text>
+      <ScreenWrapper
+        showSettingsButton
+        onSettingsPress={() => navigation.navigate('Settings')}
+      >
+        <View style={styles.container}>
+          <Header title="Ride Details" onBackPress={() => navigation.goBack()} />
+          <EmptyState message="Ride not found" />
         </View>
-      </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Header title="Ride Details" onBackPress={() => navigation.goBack()} />
+    <ScreenWrapper
+      showSettingsButton
+      onSettingsPress={() => navigation.navigate('Settings')}
+    >
+      <ScrollView style={styles.container}>
+        <Header title="Ride Details" onBackPress={() => navigation.goBack()} />
 
       {/* Status Card */}
       <View style={styles.statusCard}>
@@ -108,194 +118,134 @@ const RideDetailScreen: React.FC<RideDetailScreenProps> = ({ navigation, route }
         </Text>
       </View>
 
+      {/* Map View */}
+      <Section title="Route Map">
+        <View style={styles.mapContainer}>
+          <MapView
+            driverLocation={currentLocation || profile?.currentLocation || { latitude: 30.05, longitude: 31.01 }}
+            pickupLocations={ride.pickupPoints}
+            dropoffLocation={ride.destinationLocation}
+          />
+        </View>
+      </Section>
+
       {/* Time Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Time Information</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Start Time</Text>
-          <Text style={styles.value}>{formatDateTime(ride.startTime)}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Estimated End Time</Text>
-          <Text style={styles.value}>{formatDateTime(ride.estimatedEndTime)}</Text>
-        </View>
-
+      <Section title="Time Information">
+        <InfoRow label="Start Time" value={formatDateTime(ride.startTime)} />
+        <InfoRow label="Estimated End Time" value={formatDateTime(ride.estimatedEndTime)} />
         {ride.actualEndTime && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Actual End Time</Text>
-            <Text style={styles.value}>{formatDateTime(ride.actualEndTime)}</Text>
-          </View>
+          <InfoRow label="Actual End Time" value={formatDateTime(ride.actualEndTime)} />
         )}
-      </View>
+      </Section>
 
       {/* Route Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Route Information</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Distance</Text>
-          <Text style={styles.value}>{formatDistance(ride.totalDistance)}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Duration</Text>
-          <Text style={styles.value}>{formatDuration(ride.totalDuration)}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Pickup Points</Text>
-          <Text style={styles.value}>{ride.pickupPoints.length}</Text>
-        </View>
-      </View>
+      <Section title="Route Information">
+        <InfoRow label="Distance" value={formatDistance(ride.totalDistance)} />
+        <InfoRow label="Duration" value={formatDuration(ride.totalDuration)} />
+        <InfoRow label="Pickup Points" value={ride.pickupPoints.length.toString()} />
+      </Section>
 
       {/* Students */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Students ({ride.studentIds.length})</Text>
-
+      <Section title={`Students (${ride.studentIds.length})`}>
         {ride.studentIds.map((studentId, index) => (
           <View key={studentId} style={styles.studentCard}>
             <Text style={styles.studentName}>Student {index + 1}</Text>
             <Text style={styles.studentId}>{studentId}</Text>
           </View>
         ))}
-      </View>
+      </Section>
 
       {/* Notes */}
       {ride.notes && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notes</Text>
+        <Section title="Notes">
           <View style={styles.notesCard}>
             <Text style={styles.notesText}>{ride.notes}</Text>
           </View>
-        </View>
+        </Section>
       )}
 
       {/* Action Buttons */}
       {ride.status === 'in-progress' && (
-        <View style={styles.section}>
+        <Section>
           <Button
             title="Complete Ride"
             onPress={handleCompleteRide}
             variant="primary"
             loading={isLoading}
           />
+          <View style={{ height: SIZES.md }} />
           <Button
             title="Cancel Ride"
             onPress={handleCancelRide}
             variant="danger"
             loading={isLoading}
           />
-        </View>
+        </Section>
       )}
 
       {/* Bottom Spacing */}
       <View style={{ height: SIZES.xl }} />
     </ScrollView>
+    </ScreenWrapper>
   );
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'completed':
-      return COLORS.success;
-    case 'in-progress':
-      return COLORS.primary;
-    case 'cancelled':
-      return COLORS.danger;
-    default:
-      return COLORS.secondary;
-  }
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SIZES.xxl,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.gray[500],
   },
   statusCard: {
     marginHorizontal: SIZES.md,
     marginVertical: SIZES.md,
     padding: SIZES.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: SIZES.md,
     borderWidth: 1,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   statusLabel: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.white,
     marginBottom: SIZES.xs,
   },
   statusValue: {
     fontSize: 24,
     fontWeight: 'bold',
   },
-  section: {
-    paddingHorizontal: SIZES.md,
-    paddingVertical: SIZES.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.dark,
+  mapContainer: {
+    height: 300,
+    borderRadius: SIZES.md,
+    overflow: 'hidden',
     marginBottom: SIZES.md,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: SIZES.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
-  },
-  label: {
-    fontSize: 14,
-    color: COLORS.gray[600],
-  },
-  value: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.dark,
-  },
   studentCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: SIZES.md,
     padding: SIZES.md,
     marginBottom: SIZES.sm,
     borderWidth: 1,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   studentName: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.dark,
+    color: COLORS.white,
     marginBottom: SIZES.xs,
   },
   studentId: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: COLORS.white,
   },
   notesCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: SIZES.md,
     padding: SIZES.md,
     borderWidth: 1,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   notesText: {
     fontSize: 14,
-    color: COLORS.dark,
+    color: COLORS.white,
     lineHeight: 20,
   },
 });
