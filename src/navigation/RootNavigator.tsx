@@ -1,8 +1,10 @@
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
+import { COLORS } from '../constants';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -14,11 +16,22 @@ import LoginScreen from '../screens/LoginScreen';
 
 const Stack = createNativeStackNavigator();
 
+const LoadingScreen = () => (
+  <LinearGradient
+    colors={COLORS.gradient.grayscale}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={styles.loadingContainer}
+  >
+    <ActivityIndicator size="large" color={COLORS.white} />
+  </LinearGradient>
+);
+
 const RootNavigator = () => {
   const { isSignedIn, isLoading } = useAuth();
 
   if (isLoading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   return (
@@ -39,5 +52,13 @@ const RootNavigator = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default RootNavigator;

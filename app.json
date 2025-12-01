@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "schoolbusdriver",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "main": "index.js",
     "ios": {
       "supportsTablet": true,
@@ -34,16 +33,7 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location."
         }
-      ],
-      [
-        "expo-maps",
-        {
-          "mapsApiKey": "YOUR_MAPS_API_KEY"
-        }
       ]
-    ],
-    "experiments": {
-      "reactCompiler": true
-    }
+    ]
   }
 }

@@ -1,20 +1,26 @@
 import React from 'react';
-import { AppRegistry } from 'react-native';
+import { registerRootComponent } from 'expo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { DriverProvider } from './src/context/DriverContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 function App() {
+  console.log('App component rendering...');
+  
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <DriverProvider>
-          <RootNavigator />
-        </DriverProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <DriverProvider>
+            <RootNavigator />
+          </DriverProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
-AppRegistry.registerComponent('main', () => App);
+console.log('Registering root component...');
+registerRootComponent(App);

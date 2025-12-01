@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const bootstrapAsync = async () => {
     try {
+      console.log('AuthContext: Bootstrapping...');
       // Don't auto-login - always start on login screen
       // User must manually log in each time
       // Clear any stored auth data to ensure fresh start
@@ -49,10 +50,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         STORAGE_KEYS.userRole,
         STORAGE_KEYS.userProfile,
       ]);
+      console.log('AuthContext: Bootstrap complete');
     } catch (error) {
-      // Silently handle errors
+      console.error('AuthContext: Bootstrap error:', error);
     } finally {
       setIsLoading(false);
+      console.log('AuthContext: Loading complete');
     }
   };
 

@@ -283,6 +283,7 @@ const MapView: React.FC<MapViewProps> = ({
         </View>
       )}
       <WebView
+        key={`${validatedDriverLocation.latitude}-${validatedDriverLocation.longitude}`}
         source={{ html: mapHTML }}
         style={styles.webView}
         scrollEnabled={false}

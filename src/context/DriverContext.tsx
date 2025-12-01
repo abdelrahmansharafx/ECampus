@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import { useLocation } from '../hooks/useLocation';
+import { useAuth } from '../hooks/useAuth';
 import { DriverProfile, Location, Ride, RideStatus } from '../types';
 
 interface DriverContextType {
@@ -41,17 +42,26 @@ interface DriverProviderProps {
 }
 
 export const DriverProvider: React.FC<DriverProviderProps> = ({ children }) => {
+  console.log('DriverProvider: Initializing...');
+  const { isSignedIn } = useAuth();
   const [profile, setProfile] = useState<DriverProfile | null>(null);
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [upcomingRides, setUpcomingRides] = useState<Ride[]>([]);
   const [completedRides, setCompletedRides] = useState<Ride[]>([]);
   
-  // Get real-time GPS location
+  // Get real-time GPS location - enable when user is signed in
   const { location: gpsLocation, error: locationError, isLoading: locationLoading } = useLocation({
     accuracy: 6,
     timeInterval: 10000,
     distanceInterval: 50,
-    enabled: true,
+    enabled: isSignedIn, // Enable location tracking when user is authenticated
+  });
+  
+  console.log('DriverProvider: Location hook initialized', { 
+    isSignedIn, 
+    locationError, 
+    locationLoading,
+    hasLocation: !!gpsLocation 
   });
 
   // Update currentLocation when GPS location changes
@@ -61,6 +71,10 @@ export const DriverProvider: React.FC<DriverProviderProps> = ({ children }) => {
     if (gpsLocation) {
       // Only update if we have valid GPS coordinates
       if (gpsLocation.latitude && gpsLocation.longitude) {
+        console.log('DriverContext: Updating location', {
+          lat: gpsLocation.latitude,
+          lng: gpsLocation.longitude,
+        });
         setCurrentLocation(gpsLocation);
         // Also update profile's currentLocation if profile exists
         setProfile((prevProfile) => {

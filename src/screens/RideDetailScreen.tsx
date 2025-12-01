@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useDriver } from '../hooks/useDriver';
-import { COLORS, SIZES } from '../constants';
-import Header from '../components/Header';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../components/Button';
+import EmptyState from '../components/EmptyState';
+import Header from '../components/Header';
+import InfoRow from '../components/InfoRow';
 import MapView from '../components/MapView';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Section from '../components/Section';
-import InfoRow from '../components/InfoRow';
-import EmptyState from '../components/EmptyState';
+import { COLORS, SIZES } from '../constants';
+import { useDriver } from '../hooks/useDriver';
 import { Ride } from '../types';
-import { mockUpcomingRides, mockCompletedRides, mockDriverProfile } from '../utils/mockData';
-import { formatDistance, formatDuration, formatDateTime, getStatusColor } from '../utils/helpers';
+import { formatDateTime, formatDistance, formatDuration, getStatusColor } from '../utils/helpers';
+import { mockCompletedRides, mockUpcomingRides } from '../utils/mockData';
 
 interface RideDetailScreenProps {
   navigation: any;
